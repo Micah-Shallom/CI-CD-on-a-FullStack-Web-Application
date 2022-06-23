@@ -2,7 +2,7 @@ version: 2.1
 
 jobs:
 #########################################################
-  build_frontend:
+  build-frontend:
     docker:
       - image: circleci/node:13.8.0
     steps:
@@ -19,7 +19,7 @@ jobs:
           paths: [frontend/node_modules]
           key: frontend-build
 #########################################################
-  build_backend:
+  build-backend:
     docker: 
       - image: circleci/node:13.8.0
     steps:
@@ -35,11 +35,11 @@ jobs:
       - save_cache:
           paths: [backend/node_modules]
           key: backend-build
-##########################################################
+###########################################################
 
 
 workflows:
   default_workflow:
     jobs:
-      # - build-frontend
-      # - build-backend
+      - build-frontend
+      - build-backend
