@@ -95,27 +95,14 @@ jobs:
             cd backend
             npm install
             npm audit fix --audit-level=critical --force
+            npm audit fix --force
             npm audit --audit-level=critical
 ##########################################################################
-  deploy:
-    executor:
-      name: node/default
-    steps:
-      - checkout
-      - node/install-packages
-      - run:
-          command: npm run deploy
-      - slack/notify:
-          channel: https://udacityprojec-c6i5220.slack.com/archives/C03MAC5U49X
-          event: fail
-          template: basic_fail_1
 
 
 workflows:
   default_workflow:
     jobs:
-      -  deploy:
-          context: slack-secrets
       - build-frontend
       - build-backend
       - test-frontend:
