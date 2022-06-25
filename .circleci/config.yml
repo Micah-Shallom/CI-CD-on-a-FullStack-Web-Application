@@ -3,6 +3,16 @@ version: 2.1
 orbs: 
   slack: circleci/slack@4.10.1
 
+commands:
+  destroy_environment:
+    steps:
+      - run:
+          name: Destroy environment
+          when: on_fail
+          command: |
+            aws cloudformation delete-stack --stack-name backendStack-${CIRCLE_WORKFLOW_ID:0:7}
+            aws cloudformation delete-stack --stack-name frontendStack-${CIRCLE_WORKFLOW_ID:0:7}
+
 jobs:
 #########################################################
 #creating builds for both frontend and backend
@@ -97,8 +107,44 @@ jobs:
             npm audit fix --audit-level=critical --force
             npm audit fix --force
             npm audit --audit-level=critical
-##########################################################################
-
+##########################################################################job for deploying_infrastructure 
+  deploy-infrastructure:
+    docker:
+      - image: amazon/aws-cli
+    steps:
+      - checkout
+      - run:
+          name: Installing prerequisite utility package
+          command: |
+            npm install -y gzip tar
+      - run:
+          name: ensure backend infrastructure exists
+          command: |
+            aws cloudformation deploy \
+            --template-file .circleci/files/backend.yml \
+            --tags project="backend_infra" \
+            --stack-name backendStack-${CIRCLE_WORKFLOW_ID:0:7} \
+            --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7}
+      - run:
+          name: ensure frontend infrastructure exists
+          command: |
+            aws cloudformation deploy \
+            --template-file .circleci/files/frontend.yml \
+            --tags project="frontend_infra" \
+            --stack-name frontendStack-${CIRCLE_WORKFLOW_ID:0:7} \
+            --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7}
+      - run:
+          name: add backend ec2 ip to ansible inventory
+          command: |
+            aws ec2 describe-instances \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --output text >> ~/project/.circleci/ansible/inventory.txt
+      - persist_to_workspace:
+          root: ~/
+          paths:
+            - project/.circleci/ansible/inventory.txt
+      
 
 workflows:
   default_workflow:
@@ -113,3 +159,4 @@ workflows:
           requires: [build-frontend]
       - scan-backend:
           requires: [build-backend]
+      - deploy-infrastructure
