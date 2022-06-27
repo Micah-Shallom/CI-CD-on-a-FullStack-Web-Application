@@ -4,7 +4,7 @@ orbs:
   slack: circleci/slack@4.10.1
 
 commands:
-  destroy_environment:
+  destroy-environment:
     steps:
       - run:
           name: Destroy environment
@@ -153,6 +153,7 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
+    - destroy-environment
 ##############################################################################################
 
 
@@ -170,7 +171,12 @@ jobs:
           name: Installing dependencies
           command: |
             yum install -y tar gzip ansible awscli
-            
+      - run:
+          name: Configure server
+          command: |
+            cd .circleci/ansible
+            ansible-playbook -i inventory.txt configure-server.yml
+    - destroy-environment
 
       
 
@@ -187,4 +193,5 @@ workflows:
           requires: [build-frontend]
       - scan-backend:
           requires: [build-backend]
-      - deploy-infrastructure
+      - deploy-infrastructure:
+          requires: [test-frontend, test-backend, scan-frontend , scan-backend]
