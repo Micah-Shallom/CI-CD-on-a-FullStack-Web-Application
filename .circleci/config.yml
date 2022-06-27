@@ -15,6 +15,8 @@ commands:
 
 jobs:
 #########################################################
+
+
 #creating builds for both frontend and backend
   build-frontend:
     docker:
@@ -49,6 +51,8 @@ jobs:
           paths: [backend/node_modules]
           key: backend-build
 ###########################################################
+
+
 #testing both frontend and backend builds
   test-frontend:
     docker:
@@ -77,6 +81,8 @@ jobs:
             npm install
             npm run test
 ########################################################################
+
+
 #running builds that audits code against unknown security vulnerabilities
   scan-frontend:
     docker:
@@ -107,7 +113,10 @@ jobs:
             npm audit fix --audit-level=critical --force
             npm audit fix --force
             npm audit --audit-level=critical
-##########################################################################job for deploying_infrastructure 
+##########################################################################
+
+
+#job for deploying_infrastructure 
   deploy-infrastructure:
     docker:
       - image: amazon/aws-cli
@@ -144,6 +153,25 @@ jobs:
           root: ~/
           paths:
             - project/.circleci/ansible/inventory.txt
+##############################################################################################
+
+
+#jobs firing ansible roles into configuring infrastructure
+  configure-infrastructure:
+    docker:
+      - image: python:3.10.5-alpine3.6
+    steps:
+      - checkout
+      - add_ssh_keys:
+          fingerprints: ["40:a7:61:3c:d4:5f:5f:48:77:97:21:73:58:d4:69:b8"]
+      - attach_workspace:
+          at: ~/
+      - run:
+          name: Installing dependencies
+          command: |
+            yum install -y tar gzip ansible awscli
+            
+
       
 
 workflows:
