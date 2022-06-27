@@ -149,6 +149,7 @@ jobs:
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
             --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
             --output text >> ~/project/.circleci/ansible/inventory.txt
+            cat ~/project/.circleci/ansible/inventory.txt
       - persist_to_workspace:
           root: ~/
           paths:
@@ -170,7 +171,8 @@ jobs:
       - run:
           name: Installing dependencies
           command: |
-            yum install -y tar gzip ansible awscli
+            apk add --update tar gzip ansible 
+            pip install awscli 
       - run:
           name: Configure server
           command: |
@@ -183,8 +185,8 @@ jobs:
 workflows:
   default_workflow:
     jobs:
-      # - build-frontend
-      # - build-backend
+      - build-frontend
+      - build-backend
       # - test-frontend:
       #     requires: [build-frontend]
       # - test-backend:
@@ -193,8 +195,8 @@ workflows:
       #     requires: [build-frontend]
       # - scan-backend:
       #     requires: [build-backend]
-      # - deploy-infrastructure:
-      #     requires: [test-frontend, test-backend, scan-frontend , scan-backend]
-      - configure-infrastructure
-      # - configure-infrastructure:
-      #     requires: [deploy-infrastructure]
+      - deploy-infrastructure:
+          requires: [build-frontend, build-backend]
+          # requires: [test-frontend, test-backend, scan-frontend , scan-backend]
+      - configure-infrastructure:
+          requires: [deploy-infrastructure]
