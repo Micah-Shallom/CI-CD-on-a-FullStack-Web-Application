@@ -315,7 +315,7 @@ jobs:
             else
               return 1
             fi
-      - destroy-infrastructure
+      - destroy-environment
 
 # workflows:
 #   test_workflow:
