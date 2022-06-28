@@ -279,13 +279,17 @@ jobs:
 
   smoke-test:
     docker:
-      - image: python:3.7-alpine3.11
+      - image: python:3.10-alpine3.16
+      # Lightweight Docker image 
     steps:
-      - checkout
+      - checkout  # Checkout code from git
       - run:
           name: Install dependencies
           command: |
-            apk add --update tar gzip nodejs npm ansible curl aws-cli
+            apk add --update  tar gzip nodejs npm ansible curl aws-cli
+      - run:
+          name: Install aws cli
+          command: |
             pip install awscli
       # - run:
       #     name: Get backend url
@@ -297,7 +301,7 @@ jobs:
       - run:
           name: Backend smoke test
           command: |
-            BACKEND_IP=$(aws ec2 describe-instances \
+            export BACKEND_IP=$(aws ec2 describe-instances \
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
             --filters "Name=tag:aws:cloudformation:stack-name,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
             --output text)
