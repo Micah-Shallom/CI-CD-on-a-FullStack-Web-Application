@@ -282,8 +282,9 @@ workflows:
     jobs:
       - build-frontend
       - build-backend
-      - run-migrations:
-          requires: [build-backend]
+      # - run-migrations:
+      #     requires: [build-backend]
+      - deploy-frontend
 
 # workflows:
 #   default_workflow:
