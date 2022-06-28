@@ -129,27 +129,27 @@ jobs:
       - run:
           name: ensure backend infrastructure exists
           command: |
-            aws cloudformation deploy \
-            --template-file .circleci/files/backend.yml \
-            --tags project="backend_infra" \
-            --stack-name backendStack-${CIRCLE_WORKFLOW_ID:0:7} \
-            --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7}
+              aws cloudformation deploy \
+              --template-file .circleci/files/backend.yml \
+              --tags project=udapeople \
+              --stack-name "udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7} 
       - run:
           name: ensure frontend infrastructure exists
           command: |
             aws cloudformation deploy \
-            --template-file .circleci/files/frontend.yml \
-            --tags project="frontend_infra" \
-            --stack-name frontendStack-${CIRCLE_WORKFLOW_ID:0:7} \
-            --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7}
+              --template-file .circleci/files/frontend.yml \
+              --tags project=udapeople \
+              --stack-name "udapeople-frontend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --parameter-overrides ID=${CIRCLE_WORKFLOW_ID:0:7}
       - run:
           name: add backend ec2 ip to ansible inventory
           command: |
             aws ec2 describe-instances \
-            --query 'Reservations[*].Instances[*].PublicIpAddress' \
-            --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
-            --output text >> ~/project/.circleci/ansible/inventory.txt
-            cat ~/project/.circleci/ansible/inventory.txt
+              --query 'Reservations[*].Instances[*].PublicIpAddress' \
+              --filters "Name=tag:aws:cloudformation:stack-name,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+              --output text >> ~/project/.circleci/ansible/inventory.txt
+              cat ~/project/.circleci/ansible/inventory.txt
       - persist_to_workspace:
           root: ~/
           paths:
@@ -285,7 +285,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            apk add --update tar gzip npm curl 
+            apk add --update tar gzip nodejs npm ansible curl aws-cli
             pip install awscli
       # - run:
       #     name: Get backend url
@@ -297,12 +297,12 @@ jobs:
       - run:
           name: Backend smoke test
           command: |
-            export BACKEND_IP=$(aws ec2 describe-instances \
+            BACKEND_IP=$(aws ec2 describe-instances \
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
             --filters "Name=tag:aws:cloudformation:stack-name,Values=udapeople-backend-${CIRCLE_WORKFLOW_ID:0:7}" \
             --output text)
 
-            export API_URL="http://${BACKEND_IP}:3030"
+            API_URL="http://${BACKEND_IP}:3030"
             echo "${API_URL}"
             if curl "${API_URL}/api/status" | grep "ok"
             then
