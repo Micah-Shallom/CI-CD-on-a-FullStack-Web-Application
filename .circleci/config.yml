@@ -221,13 +221,13 @@ jobs:
             yum install -y tar python3 gzip npm
       - run:
           name: Get backend url
-            command: |
-              export BACKEND_IP=$(cat ~/project/.circleci/ansible/inventory.txt)
-              export API_URL = "http://${BACKEND_IP}:3030"
-              echo "${API_URL}"
-              echo "API_URL = ${API_URL}"
-              echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
-              cat frontend/.env
+          command: |
+            export BACKEND_IP=$(cat ~/project/.circleci/ansible/inventory.txt)
+            export API_URL = "http://${BACKEND_IP}:3030"
+            echo "${API_URL}"
+            echo "API_URL = ${API_URL}"
+            echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
+            cat frontend/.env
       - run:
           name: "deploying frontend objects"
           command: |
