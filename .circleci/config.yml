@@ -257,6 +257,7 @@ jobs:
           name: install dependencies
           command: |
             apk add --update tar gzip ansible npm 
+            /usr/local/bin/python -m pip install --upgrade pip
             pip install awscli
       - run:
           name: Deploy backend
@@ -284,6 +285,7 @@ jobs:
           name: Install dependencies
           command: |
             apk add --update tar gzip ansible npm 
+            /usr/local/bin/python -m pip install --upgrade pip
             pip install ansible
       - run:
           name: Get backend url
