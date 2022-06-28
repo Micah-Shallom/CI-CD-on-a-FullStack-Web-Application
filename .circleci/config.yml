@@ -283,7 +283,7 @@ workflows:
       # - run-migrations:
       #     requires: [build-backend]
       - deploy-frontend:
-          requires:[build-frontend]
+          requires: [build-frontend]
 
 # workflows:
 #   default_workflow:
