@@ -224,7 +224,10 @@ jobs:
       - run:
           name: Get backend url
           command: |
-            export BACKEND_IP=$(cat ~/project/.circleci/ansible/inventory.txt)
+            export BACKEND_IP=$(aws ec2 describe-instances \
+            --query 'Reservations[*].Instances[*].PublicIpAddress' \
+            --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
+            --output text)
             export API_URL = "http://${BACKEND_IP}:3030"
             echo "${API_URL}"
             echo "API_URL = ${API_URL}"
@@ -238,7 +241,8 @@ jobs:
             npm run build
             tar -czvf artifact-"${CIRCLE_WORKFLOW_ID:0:7}".tar.gz dist
             aws s3 cp dist s3://udapeople-${CIRCLE_WORKFLOW_ID:0:7} --recursive
-      - destroy-environment
+      # - destroy-environment
+
   #deploying backend
   deploy-backend:
     docker:
@@ -288,7 +292,6 @@ workflows:
       - scan-backend:
           requires: [build-backend]
       - deploy-infrastructure:
-          # requires: [build-frontend, build-backend]
           requires: [test-frontend, test-backend, scan-frontend , scan-backend]
       - configure-infrastructure:
           requires: [deploy-infrastructure]
