@@ -315,7 +315,7 @@ jobs:
             else
               return 1
             fi
-    - deploy-infrastructure
+      - deploy-infrastructure
 
 # workflows:
 #   test_workflow:
