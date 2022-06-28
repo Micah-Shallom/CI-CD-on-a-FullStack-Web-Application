@@ -208,7 +208,8 @@ jobs:
 # deploying frontend
   deploy-frontend:
     docker:
-      - image: amazon/aws-cli
+      # - image: amazon/aws-cli
+      - image: python:3.7-alpine3.11
     steps:
       - checkout
       - attach_workspace:
@@ -218,7 +219,8 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            yum install -y tar python3 gzip npm
+            apk add --update tar gzip ansible
+            pip install awscli
       - run:
           name: Get backend url
           command: |
@@ -263,6 +265,8 @@ jobs:
             cd ..
             # Zip the directory
             tar -C backend -czvf artifact.tar.gz .
+            mkdir -p ~/project/.circleci/ansible/roles/deploy/files/
+            mv artifact.tar.gz .circleci/ansible/roles/deploy/files/artifact.tar.gz
             cd .circleci/ansible
             echo "Contents  of the inventory.txt file is -------"
             cat inventory.txt
@@ -288,6 +292,8 @@ workflows:
           requires: [test-frontend, test-backend, scan-frontend , scan-backend]
       - configure-infrastructure:
           requires: [deploy-infrastructure]
+      - run-migrations:
+          requires: [configure-infrastructure]
       - deploy-frontend:
           requires: [configure-infrastructure]
       - deploy-backend:
