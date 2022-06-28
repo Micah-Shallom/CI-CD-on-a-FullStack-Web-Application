@@ -224,14 +224,14 @@ jobs:
       - run:
           name: Get backend url
           command: |
-            export BACKEND_IP=$(aws ec2 describe-instances \
+            export BACKENDIP=$(aws ec2 describe-instances \
             --query 'Reservations[*].Instances[*].PublicIpAddress' \
             --filters "Name=tag:Name,Values=backend-${CIRCLE_WORKFLOW_ID:0:7}" \
             --output text)
-            export API_URL = "http://${BACKEND_IP}:3030"
+            export API_URL = "http://${BACKENDIP}:3030"
             echo "${API_URL}"
             echo "API_URL = ${API_URL}"
-            echo API_URL="http://${BACKEND_IP}:3030" >> frontend/.env
+            echo API_URL="http://${BACKENDIP}:3030" >> frontend/.env
             cat frontend/.env
       - run:
           name: "deploying frontend objects"
@@ -277,7 +277,7 @@ jobs:
             ansible-playbook -i inventory.txt deploy-backend.yml
       - destroy-environment
       
-wowrkflows:
+workflows:
   test_workflow:
     jobs:
       - build-frontend
