@@ -5,6 +5,9 @@ orbs:
   node: circleci/node@5.0.2
 commands:
   destroy-environment:
+    parameters:
+      workflow_id:
+        type: String
     steps:
       - run:
           name: Destroy environment
