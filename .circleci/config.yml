@@ -7,7 +7,7 @@ commands:
   destroy-environment:
     parameters:
       workflow_id:
-        type: String
+        type: string
     steps:
       - run:
           name: Destroy environment
