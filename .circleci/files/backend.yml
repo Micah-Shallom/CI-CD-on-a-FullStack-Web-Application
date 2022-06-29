@@ -30,7 +30,7 @@ Resources:
         - Ref: InstanceSecurityGroup
       KeyName: udacity 
       # Ubuntu 18 or higher works fine
-      ImageId: ami-08d4ac5b634553e16 
+      ImageId: ami-0ddf424f81ddb0720 
       Tags:
         - Key: Name
           Value: !Sub backend-${ID}
