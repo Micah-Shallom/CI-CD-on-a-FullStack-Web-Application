@@ -27,7 +27,7 @@ commands:
             name: Revert migrations
             when: on_fail
             command: |
-                SUCCESS=$(curl --insecure  https://kvdb.io/AG66VEkndRmbJkBjKDM4Va/migration_<< parameters.workflow_id >>)
+                SUCCESS=$(curl --insecure  https://kvdb.io/${KVDB_ID}/migration_<< parameters.workflow_id >>)
                 # Logic for reverting the database state
                 if (( $SUCCESS == 1 ));
                 then
@@ -224,7 +224,7 @@ jobs:
           command: |
             if grep -q "has been executed successfully." ~/project/backend/migrations_dump.txt
             then
-                curl https://kvdb.io/AG66VEkndRmbJkBjKDM4Va/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
+                curl https://kvdb.io/${KVDB_ID}/migration_${CIRCLE_WORKFLOW_ID:0:7}  -d '1'
             fi
       - destroy-environment:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
@@ -358,15 +358,36 @@ jobs:
       - revert-migrations:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
 ############################################################################
+
+  # get_last_deployment_id:
+  #   docker:
+  #     - image: amazon/aws-cli
+  #   steps:
+  #     - checkout
+  #     - run: yum install -y tar gzip
+  #     - run:
+  #         name: Fetch and save the old pipeline ID (bucket name) responsible for the last release.
+  #         command: |
+  #           aws cloudformation \
+  #           list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+  #           --no-paginate --output text > ~/textfile.txt
+
+
 #updating cloudfront for transfer to green deployment
   cloudfront-update:
     docker:
       - image: amazon/aws-cli
     steps:
       - checkout
-      # - run:
-      #     name: Install dependencies
-      #     command: |
+      - run:
+          name: Getting the old workflow id and saving to kvdb.io 
+          command: |
+            WorkflowID=$(aws cloudformation \
+            list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+            --no-paginate --output text)
+            echo "Old Worflow ID": $WorkflowID
+            curl https://kvdb.io/${KVDB_ID}/WorkflowID -d "${WorkflowID}"
+
       - run:
           name: Update cloudfront distribution
           command: |
@@ -379,10 +400,10 @@ jobs:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
       - revert-migrations:
           workflow_id: ${CIRCLE_WORKFLOW_ID:0:7}
-########################################################################
+##################################################################################
   cleanup:
     docker:
-      - image: python:3.10-alpine3.16
+      - image: cimg/base:stable
     steps:
       - checkout
       - run:
@@ -392,65 +413,71 @@ jobs:
           name:  Get old stack workflow id
           command: |
             # Fetch the Old workflow ID
-            export OldWorkflowID=$(aws cloudformation \
-                    list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
-                    --no-paginate --output text)
-            echo OldWorkflowID: "${OldWorkflowID}"
-            echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
+            # export OldWorkflowID=$(aws cloudformation \
+            #         list-exports --query "Exports[?Name==\`WorkflowID\`].Value" \
+            #         --no-paginate --output text)
+            # echo OldWorkflowID: "${OldWorkflowID}"
 
             # Fetch the stack names          
-            export STACKS=$(aws cloudformation list-stacks --query "StackSummaries[*].StackName" \
-                    --stack-status-filter CREATE_COMPLETE --no-paginate --output text)
-            # echo Stack names: "${STACKS[@]}"
+            export STACKS=($(aws cloudformation list-stacks \
+               --query "StackSummaries[*].StackName" \
+               --stack-status-filter CREATE_COMPLETE --no-paginate --output text)) 
+            echo Stack names: "${STACKS[@]}"
 
-             export OldWorkflowIDNo="$(echo $OldWorkflowID | awk -F - '{ print $2 }')"
+            export OldWorkflowID=$(curl --insecure https://kvdb.io/${KVDB_ID}/WorkflowID)
 
-            echo $OldWorkflowIDNo
+            echo Old Workflow ID: $OldWorkflowID
+            echo CIRCLE_WORKFLOW_ID "${CIRCLE_WORKFLOW_ID:0:7}"
+
+
+            #  export OldWorkflowIDNo="$(echo $OldWorkflowID | awk -F - '{ print $2 }')"
+
+            # echo $OldWorkflowIDNo
 
       - run:
           name: Remove old stacks and files
           command: |
-
-            if [[ "${CIRCLE_WORKFLOW_ID:0:7}" != "${OldWorkflowIDNo}" ]]
+            if [[ "${STACKS[@]}" =~ "${OldWorkflowID}" ]]
             then
-              aws cloudformation delete-stack --stack-name udapeople-backend-${OldWorkflowIDNo}
-              aws s3 rm s3://udapeople-${OldWorkflowIDNo} --recursive
-              aws cloudformation delete-stack --stack-name udapeople-frontend-${OldWorkflowIDNo}
+              aws s3 rm "s3://udapeople-${OldWorkflowID}" --recursive
+              aws cloudformation delete-stack --stack-name "udapeople-backend-${OldWorkflowID}"
+              aws cloudformation delete-stack --stack-name "udapeople-frontend-${OldWorkflowID}"
             else
               echo "No Blue Deployment to cleanup"
             fi
 
-# workflows:
-#   test_workflow:
-#     jobs:
-#       - cleanup
-
 workflows:
-  default_workflow:
+  test_workflow:
     jobs:
-      - build-frontend
-      - build-backend
-      - test-frontend:
-          requires: [build-frontend]
-      - test-backend:
-          requires: [build-backend]
-      - scan-frontend:
-          requires: [build-frontend]
-      - scan-backend:
-          requires: [build-backend]
-      - deploy-infrastructure:
-          requires: [test-frontend, test-backend, scan-frontend , scan-backend]
-      - configure-infrastructure:
-          requires: [deploy-infrastructure]
-      - run-migrations:
-          requires: [configure-infrastructure]
-      - deploy-frontend:
-          requires: [configure-infrastructure, run-migrations]
-      - deploy-backend:
-          requires: [deploy-frontend, run-migrations]
-      - smoke-test:
-          requires: [deploy-frontend, deploy-backend]
-      - cloudfront-update:
-          requires: [smoke-test]
-      - cleanup:
-          requires: [cloudfront-update]
+      - cleanup
+
+# workflows:
+#   default_workflow:
+#     jobs:
+#       # - get-last-deployment-id
+#       - build-frontend
+#       - build-backend
+#       - test-frontend:
+#           requires: [build-frontend]
+#       - test-backend:
+#           requires: [build-backend]
+#       - scan-frontend:
+#           requires: [build-frontend]
+#       - scan-backend:
+#           requires: [build-backend]
+#       - deploy-infrastructure:
+#           requires: [test-frontend, test-backend, scan-frontend , scan-backend]
+#       - configure-infrastructure:
+#           requires: [deploy-infrastructure]
+#       - run-migrations:
+#           requires: [configure-infrastructure]
+#       - deploy-frontend:
+#           requires: [configure-infrastructure, run-migrations]
+#       - deploy-backend:
+#           requires: [deploy-frontend, run-migrations]
+#       - smoke-test:
+#           requires: [deploy-frontend, deploy-backend]
+#       - cloudfront-update:
+#           requires: [smoke-test]
+#       - cleanup:
+#           requires: [cloudfront-update]
