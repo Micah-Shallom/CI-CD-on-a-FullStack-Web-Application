@@ -414,7 +414,7 @@ jobs:
             if [[ "${CIRCLE_WORKFLOW_ID:0:7}" != "${OldWorkflowIDNo}" ]]
             then
               aws cloudformation delete-stack --stack-name udapeople-backend-${OldWorkflowIDNo}
-              aws s3 rm s3://${OldWorkflowID} --recursive
+              aws s3 rm s3://udapeople-${OldWorkflowIDNo} --recursive
               aws cloudformation delete-stack --stack-name udapeople-frontend-${OldWorkflowIDNo}
             else
               echo "No Blue Deployment to cleanup"
