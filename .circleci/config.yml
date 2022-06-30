@@ -408,7 +408,10 @@ jobs:
       - checkout
       - run:
           name: Installing awscli
-          command: pip install awscli
+          command: |
+            curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+            unzip awscliv2.zip
+            sudo ./aws/install
       - run:
           name:  Get old stack workflow id
           command: |
