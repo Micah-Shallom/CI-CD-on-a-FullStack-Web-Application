@@ -418,7 +418,7 @@ jobs:
     steps:
       - run:
           command: |
-            py
+            print("hello world")
 
 workflows:
   test_workflow:
