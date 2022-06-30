@@ -414,8 +414,7 @@ jobs:
             fi
   test:
     docker:
-    - image: python:3.10-alpine3.16
-    steps:
+    - image: python:3.10
       - run:
           command: |
             print("hello world")
