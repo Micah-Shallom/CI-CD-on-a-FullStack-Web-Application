@@ -403,9 +403,9 @@ jobs:
                     --stack-status-filter CREATE_COMPLETE --no-paginate --output text)
             # echo Stack names: "${STACKS[@]}"
 
-            #  export OldWorkflowIDNo="$(echo $OldWorkflowID | awk -F - '{ print $2 }')"
+             export OldWorkflowIDNo="$(echo $OldWorkflowID | awk -F - '{ print $2 }')"
 
-            # echo $OldWorkflowIDNo
+            echo $OldWorkflowIDNo
 
       - run:
           name: Remove old stacks and files
