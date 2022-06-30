@@ -418,7 +418,7 @@ jobs:
     steps:
       - run:
           command: |
-            python --version
+            py
 
 workflows:
   test_workflow:
