@@ -474,10 +474,6 @@ jobs:
           else
             echo "No blue deployment available"
           fi
-# workflows:
-#   test_workflow:
-#     jobs:
-#       - cleanup
 
 workflows:
   default_workflow:
